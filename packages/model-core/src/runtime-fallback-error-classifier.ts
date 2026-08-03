@@ -25,6 +25,7 @@ export type RuntimeFallbackErrorType =
   | "quota_exceeded"
   | "context_overflow"
   | "abort"
+  | "stream_failure"
 
 export interface RuntimeFallbackRetryOptions {
   onUnsafeRetryableSignalRejected?: (details: {
@@ -44,12 +45,43 @@ function isLocalizedQuotaExhaustionMessage(message: string): boolean {
   )
 }
 
+function isExplicitUserCancellation(message: string): boolean {
+  return (
+    /the user aborted/i.test(message) ||
+    /user.*cancel/i.test(message) ||
+    /manual.*abort/i.test(message) ||
+    /aborted by user/i.test(message)
+  )
+}
+
+function isTechnicalStreamFailure(message: string, errorName: string | undefined): boolean {
+  const technicalPatterns = [
+    /midstream/i,
+    /socket.*closed/i,
+    /connection.*reset/i,
+    /econnreset/i,
+    /econnrefused/i,
+    /etimedout/i,
+    /fetch.*failed/i,
+    /network.*error/i,
+    /stream.*broken/i,
+    /stream.*interrupted/i,
+    /upstream.*failed/i,
+    /provider.*error/i,
+  ]
+  
+  return technicalPatterns.some((pattern) => pattern.test(message))
+}
+
 export function classifyRuntimeFallbackError(error: unknown): RuntimeFallbackErrorType | undefined {
   const message = getRuntimeFallbackErrorMessage(error)
   const errorName = getRuntimeFallbackErrorName(error)?.toLowerCase().replace(/[_-]/g, "")
 
   if (errorName?.includes("messageabortederror") || errorName?.includes("aborterror")) {
-    return "abort"
+    if (isExplicitUserCancellation(message)) {
+      return "abort"
+    }
+    return "stream_failure"
   }
 
   if (errorName === "contextoverflowerror") {
@@ -122,7 +154,8 @@ export function isRuntimeFallbackRetryableError(
   if (
     errorType === "missing_api_key" ||
     errorType === "model_not_found" ||
-    errorType === "quota_exceeded"
+    errorType === "quota_exceeded" ||
+    errorType === "stream_failure"
   ) {
     return true
   }
