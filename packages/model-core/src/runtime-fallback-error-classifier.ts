@@ -81,7 +81,10 @@ export function classifyRuntimeFallbackError(error: unknown): RuntimeFallbackErr
     if (isExplicitUserCancellation(message)) {
       return "abort"
     }
-    return "stream_failure"
+    if (isTechnicalStreamFailure(message, errorName)) {
+      return "stream_failure"
+    }
+    return "abort"
   }
 
   if (errorName === "contextoverflowerror") {
