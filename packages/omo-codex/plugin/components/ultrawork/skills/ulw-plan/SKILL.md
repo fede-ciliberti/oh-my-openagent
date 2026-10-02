@@ -78,6 +78,7 @@ When producing the plan, encode every executable item as a column-zero Markdown 
 - **Approval is not execution.** Approval authorizes writing the plan ONLY, never implementation. ONE request -> ONE plan, however large.
 - **The durable draft is the resume point.** Record `intent`, `review_required`, decisions, the approval gate, and the ledgers to `.omo/drafts/<slug>.md` as you go; on any later turn read it and resume from those fields instead of rerouting from memory.
 - **Agent-executed QA per todo** (happy + failure, exact tool + invocation, evidence path). Zero human-intervention verification. Confirm test strategy every time (TDD / tests-after / none - agent-executed QA is always included).
+- **Delivery-assurance trigger.** Ante feature con logica de negocio o que toque al LLM, cargar la skill `delivery-assurance` y exigir su checklist de 5 gates en `Verification Strategy`, con subseccion fija `### Decision Table` (cada celda valida = un caso; imposible = constraint, nunca filtro post-hoc).
 
 ## Approval gate
 

@@ -255,6 +255,11 @@ Your next move: <fill - e.g. approve, or run a high-accuracy review>. Full execu
 > Zero human intervention - all verification is agent-executed.
 - Test decision: <TDD | tests-after | none> + framework
 - Evidence: <attemptDir>/task-<N>-${slug}.<ext> (attemptDir = currentAttemptDir from 'omo ulw-loop status --json', .omo/evidence/ulw/<session>/<goalId>/a<attempt>; outside ulw-loop use .omo/evidence/)
+### Decision Table
+> Mandatory when the feature has business logic or touches the LLM (see delivery-assurance trigger below). Each valid cell = one test case. Pure-infra work (rename, format, move files) is exempt - write "N/A (pure infra)" with a one-line reason instead of deleting this section.
+| # | Parameters | Expected | Test |
+| --- | --- | --- | --- |
+| 1 | <param=value, ...> | <verdict/behavior> | <todo or command> |
 
 ## Execution strategy
 ### Parallel execution waves

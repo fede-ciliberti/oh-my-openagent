@@ -155,6 +155,7 @@ No Metis, no plan file, no execution until the user approves. The UNCLEAR path a
 ## Success criteria
 ```
 > Target 5-8 todos per wave; fewer than 3 (except the final) means under-splitting. Implementation + Test = ONE todo. Each todo carries: exhaustive References (the executor has no interview context), agent-executable Acceptance criteria, happy + failure QA scenarios each with an evidence path, and a Commit line.
+> Delivery-assurance gate: when the feature has business logic or touches the LLM, `## Verification strategy` MUST contain a `### Decision Table` subsection (impossibilities as pre-declared constraints, each valid cell = one test case). Pure-infra work writes "N/A (pure infra)" with a one-line reason instead of deleting it.
 
 ## Plan artifact producer contract
 
@@ -181,6 +182,11 @@ Every "present the plan summary/brief" above delivers THIS structure, in the use
 
 ### High-accuracy review (dual review)
 The high-accuracy review is DUAL and both passes must return OKAY before handoff: (1) the native `momus` reviewer subagent, and (2) an independent Codex CLI review on gpt-5.6-sol at xhigh reasoning, run in a disposable isolated workspace and `CODEX_HOME` with the harness's normal approval and sandbox policy. Do not add flags that disable approvals or sandboxing. Momus runs at High and may take substantially longer than other agents. One round = exactly ONE `momus` + ONE independent review, dispatched together against the COMPLETE plan file (todos + TL;DR filled) at the draft's exact recorded `plan_path`. Keep Momus in flight and wait for its terminal result: elapsed time alone never justifies cancelling, duplicating, replacing, or treating it as failed. After both verdicts return, fix every cited issue and resubmit both fresh until each approves. CLEAR: runs when the user opts in or `review_required: true`. UNCLEAR: runs automatically unless Classify=Trivial.
+
+#### Momus delivery-assurance gates (REJECT rules)
+Both review lanes MUST return REJECT (not OKAY with comments) when either fires:
+1. **Blocking design without exit** - the plan introduces or modifies a blocking mechanism (`*_MODE`, guardrail, suspension, handoff, auth gate) with no kill-switch, no `log-only` rollout, and no fallback path. A block that cannot be turned off or observed before enforcing is not shippable.
+2. **Missing decision table** - the feature has business logic or touches the LLM and `## Verification strategy` has no `### Decision Table` subsection with one row per valid cell (or no "N/A (pure infra)" one-line justification). Each valid cell must map to a test case; impossibilities must be pre-declared constraints, never post-hoc row filtering.
 
 Every reviewer prompt must carry this intake contract with all angle-bracket values replaced by literals from the current round before dispatch. Never pass `draft.plan_path`, `draft.plan_sha256`, field names, or another symbolic reference to an isolated reviewer. For the independent Codex lane, materialize the complete plan at that same literal workspace-relative path inside the disposable review workspace, verify the copied file's SHA-256, then dispatch with that disposable workspace's literal canonical root. Its first action is to read the exact recorded path; retrieval drift stops that lane before review:
 
